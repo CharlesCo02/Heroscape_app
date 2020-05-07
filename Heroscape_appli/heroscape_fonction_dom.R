@@ -3,7 +3,7 @@
 prob_att <- 3/6
 prob_def <- 2/6
 
-Dommage <- function(nb_att, de_att, de_def, vie_def){
+Dommage <- Vectorize(function(nb_att, de_att, de_def, vie_def){
   
   hit_max <- vie_def
   prob_dom_tot <- numeric(hit_max + 1)
@@ -54,10 +54,34 @@ Dommage <- function(nb_att, de_att, de_def, vie_def){
   }
   
   return(prob_dom_tot)
+})
+
+
+prob_no_dam <- c()
+
+for(att in 1:12){
+  prob_no_dam <- c(prob_no_dam, Dommage(1, att, 1:12, 1)[1, ])
 }
 
+nb_col <- 12
+nb_row <- 12
 
+mat_prob <- matrix(prob_no_dam, nrow = nb_row, ncol = nb_col, byrow = TRUE)
 
+nom_col <- c()
+for(i in 1:nb_col){
+  nom_col <- c(nom_col, paste0("Def", i))
+}
+
+nom_ligne <- c()
+for(i in 1:nb_row){
+  nom_ligne <- c(nom_ligne, paste0("Att", i))
+}
+
+colnames(mat_prob) <- nom_col
+rownames(mat_prob) <- nom_ligne
+
+saveRDS(mat_prob, file = "../Heroscape_appli/objets_save/mat_no_dam.rds")
 
 
 
