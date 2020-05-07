@@ -1,44 +1,74 @@
-#
-#
 
 library(shiny)
 library(shinyWidgets)
+library(shinydashboard)
+library(shinyjs)
 source("heroscape_fonction_dom.R")
 
-ui <- fluidPage(
-    
-    titlePanel(title = h2("Distribution des dommages", align = "center")), br(),
-    
+header <- dashboardHeader(title = "Options", titleWidth = "200px")
 
-    sidebarLayout(
-        sidebarPanel(
-            selectInput("nb_attaque", "Nombre d'attaque", selected = 1, choices = c("1" = 1, "2" = 2, "3" = 3, "4" = 4)), br(),
-            sliderInput("nb_de_att", "nombre de des de l'attaquant", value = 1, min = 1, max = 15, step = 1), br(),
-            sliderInput("nb_de_def", "nombre de des du defenseur", value = 1, min = 1, max = 15, step = 1), br(),
-            sliderInput("nb_vie_def", "nombre de vie du defenseur", value = 1, min = 1, max = 10, step = 1), br(),
-            checkboxInput("counter_attack", "Contre-attaque", value = FALSE)
-            
+sidebar <- dashboardSidebar(width = "250px",
+                            sidebarMenu(
+                                menuItem(text = "Distribution des dommages", tabName = "probs_dam"),
+                                menuItem(text = "Table du défenseur", tabName = "probs_no_dam")
+                            ))
+
+body <- dashboardBody(
+    tabItems(
+        
+        tabItem(tabName = "probs_dam",
+                sidebarLayout(
+                    sidebarPanel(width = 2,
+                                 selectInput("nb_attaque", "Nombre d'attaque", selected = 1, choices = c("1" = 1, "2" = 2, "3" = 3, "4" = 4),
+                                             width = "200px"), br(),
+                                 selectInput("nb_de_att", "nombre de des de l'attaquant", choices = c(1:12),
+                                             width = "200px"), br(),
+                                 selectInput("nb_de_def", "nombre de des du defenseur", choices = c(1:15),
+                                             width = "200px"), br(),
+                                 selectInput("nb_vie", "nombre de vie du defenseur", choices = c(1:9),
+                                             width = "200px"), br(),
+                                 checkboxInput("counter_attack", "Contre-attaque", value = FALSE)
+                                 
+                    ),
+                    
+                    
+                    mainPanel(width = 10,
+                        verbatimTextOutput("distr_dommages"),
+                        verbatimTextOutput("attaque_nec")
+                    )
+                )
+                
         ),
-        
-        
-        mainPanel(
-            
-            tabsetPanel(type = "tab", 
-                        tabPanel('Sommaire', verbatimTextOutput("distr_dommages"), verbatimTextOutput("attaque_nec")),
-                        tabPanel('Graphiques')
-                        
-                        )
-            
+        tabItem(tabName = "probs_no_dam",
+            tableOutput("table_survie")
         )
     )
 )
 
+ui <- dashboardPage(header, sidebar, body)
+
 
 server <- function(input, output) {
     
+    nb_attaque <- reactive({
+        as.numeric(input$nb_attaque)
+    })
+    
+    nb_de_att <- reactive({
+        as.numeric(input$nb_de_att)
+    })
+    
+    nb_de_def <- reactive({
+        as.numeric(input$nb_de_def)
+    })
+    
+    nb_vie <- reactive({
+        as.numeric(input$nb_vie)
+    })
+    
     output$distr_dommages <- renderText({
-        
-        ele_1 <- Dommage(input$nb_attaque, input$nb_de_att, input$nb_de_def, input$nb_vie_def)
+
+        ele_1 <- Dommage(nb_attaque(), nb_de_att(), nb_de_def(), nb_vie())
         message_1 <- "probabilite de faire"
         text_1 <- ''
         
@@ -53,16 +83,20 @@ server <- function(input, output) {
         
         message_2 <- "probabilite que le defenseur soit encore vivant apres"
         text_2 <- ''
-        prob <- numeric(input$nb_attaque)
+        prob <- numeric(nb_attaque())
         
         for(j in 1:(input$nb_attaque)){
-            prob[j] <-  1 - Dommage(j, input$nb_de_att, input$nb_de_def, input$nb_vie_def)[input$nb_vie_def + 1]
+            prob[j] <-  1 - Dommage(j, nb_de_att(), nb_de_def(), nb_vie())[nb_vie() + 1]
             text_2 <- paste(paste(message_2, j, "attaque(s) : ", toString(format(prob[j], digits = 6)), sep = ' '), text_2, sep = '\n')
         }        
 
         return(text_2)
     })
     
+    output$table_survie <- renderTable({
+        dtable <- as.data.frame(mat_prob)
+        dtable <- cbind(' ' = rownames(dtable), dtable)
+    })
 }
 
 

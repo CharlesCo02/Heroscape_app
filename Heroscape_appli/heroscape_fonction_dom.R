@@ -45,8 +45,7 @@ Dommage <- Vectorize(function(nb_att, de_att, de_def, vie_def){
       for(j in 0:hit_max){
         for(k in 0:hit_max){
           for(z in 0:hit_max){
-            prob_dom_tot[pmin(i + j + k + z + 1, hit_max + 1)] <- prob_dom_tot[pmin(i + j + k + z + 1, hit_max + 1)] 
-                                                                  + prob_dom[i + 1] * prob_dom[j + 1] * prob_dom[k + 1] * prob_dom[z + 1]
+            prob_dom_tot[pmin(i + j + k + z + 1, hit_max + 1)] <- prob_dom_tot[pmin(i + j + k + z + 1, hit_max + 1)] + prob_dom[i + 1] * prob_dom[j + 1] * prob_dom[k + 1] * prob_dom[z + 1]
           }
         }
       }
